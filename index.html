@@ -214,7 +214,7 @@
                    Investment Portfolio
                    <span class="live-indicator" style="margin-left: auto; font-size: 0.9rem;">
                        <span class="live-dot"></span>
-                       Live Market Data
+                       <span id="data-source">Connecting...</span>
                    </span>
                </h2>
                <div class="card">
@@ -537,105 +537,34 @@
             TSLA: { shares: 100, costBasis: 244.00 }
         };
 
-        // --- Realistic Market Simulation ---
-        let marketSimulation = {
-            // Crypto
-            crypto: {
-                btcBasePrice: 70000 + (Math.random() - 0.5) * 10000,
-                ethBasePrice: 3500 + (Math.random() - 0.5) * 1000,
-                lastUpdate: Date.now()
-            },
-            // Stocks
-            stocks: {
-                AAPL: { basePrice: 190.00 + (Math.random() - 0.5) * 20, trend: 1 },
-                GOOGL: { basePrice: 141.00 + (Math.random() - 0.5) * 15, trend: 1 },
-                TSLA: { basePrice: 183.00 + (Math.random() - 0.5) * 30, trend: -1 },
-                lastUpdate: Date.now()
-            }
-        };
+        // --- API Configuration ---
+        const API_BASE_URL = window.location.origin; // Uses same domain as your app
 
-        function isMarketOpen() {
-            const now = new Date();
-            const dayOfWeek = now.getDay();
-            const currentHour = now.getHours();
-            return !(dayOfWeek === 0 || dayOfWeek === 6) && currentHour >= 9 && currentHour < 16;
-        }
-
-        function generateRealisticCryptoData() {
-            const btcVolatility = (Math.random() - 0.5) * 0.02;
-            const ethVolatility = (Math.random() - 0.5) * 0.025;
-            
-            marketSimulation.crypto.btcBasePrice *= (1 + btcVolatility);
-            marketSimulation.crypto.ethBasePrice *= (1 + ethVolatility);
-            
-            marketSimulation.crypto.btcBasePrice = Math.max(50000, Math.min(100000, marketSimulation.crypto.btcBasePrice));
-            marketSimulation.crypto.ethBasePrice = Math.max(2000, Math.min(5000, marketSimulation.crypto.ethBasePrice));
-            
-            const btc24hChange = ((Math.random() - 0.5) * 10);
-            const eth24hChange = ((Math.random() - 0.5) * 12);
-            
-            return {
-                bitcoin: {
-                    usd: marketSimulation.crypto.btcBasePrice,
-                    usd_24h_change: btc24hChange
-                },
-                ethereum: {
-                    usd: marketSimulation.crypto.ethBasePrice,
-                    usd_24h_change: eth24hChange
-                }
-            };
-        }
-
-        function generateRealisticStockData() {
-            const marketOpen = isMarketOpen();
-            const baseVolatility = marketOpen ? 0.015 : 0.003;
-            
-            const stocks = {};
-            
-            Object.keys(marketSimulation.stocks).forEach(symbol => {
-                if (symbol === 'lastUpdate') return;
-                
-                const stock = marketSimulation.stocks[symbol];
-                const volatility = (Math.random() - 0.5) * baseVolatility;
-                
-                stock.basePrice *= (1 + volatility);
-                
-                // Stock-specific bounds
-                if (symbol === 'AAPL') {
-                    stock.basePrice = Math.max(150, Math.min(250, stock.basePrice));
-                } else if (symbol === 'GOOGL') {
-                    stock.basePrice = Math.max(100, Math.min(200, stock.basePrice));
-                } else if (symbol === 'TSLA') {
-                    stock.basePrice = Math.max(120, Math.min(300, stock.basePrice));
-                }
-                
-                const dayChange = ((Math.random() - 0.5) * 6);
-                
-                stocks[symbol] = {
-                    price: stock.basePrice,
-                    change: dayChange,
-                    changePercent: (dayChange / stock.basePrice) * 100
-                };
-            });
-            
-            return { stocks, marketOpen };
-        }
-
-        async function updateCryptoPrices() {
+        // --- Market data functions ---
+        async function fetchRealCryptoPrices() {
             const btcElement = document.getElementById('btc-value');
             const ethElement = document.getElementById('eth-value');
             const totalElement = document.getElementById('total-crypto-value');
             const updatedElement = document.getElementById('crypto-updated');
-
-            btcElement.innerHTML = '<span class="crypto-loading">Updating...</span>';
-            ethElement.innerHTML = '<span class="crypto-loading">Updating...</span>';
-            totalElement.innerHTML = '<span class="crypto-loading">Updating...</span>';
-
-            await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 700));
+            const dataSourceElement = document.getElementById('data-source');
 
             try {
-                const data = generateRealisticCryptoData();
+                // Show loading state
+                btcElement.innerHTML = '<span class="crypto-loading">Loading...</span>';
+                ethElement.innerHTML = '<span class="crypto-loading">Loading...</span>';
+                totalElement.innerHTML = '<span class="crypto-loading">Loading...</span>';
+                dataSourceElement.textContent = 'Connecting...';
+
+                // Fetch real data from your Vercel API
+                const response = await fetch(`${API_BASE_URL}/api/crypto`);
                 
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Calculate values
                 const btcPrice = data.bitcoin.usd;
                 const ethPrice = data.ethereum.usd;
                 const btc24hChange = data.bitcoin.usd_24h_change;
@@ -645,56 +574,160 @@
                 const ethValue = CRYPTO_HOLDINGS.ethereum * ethPrice;
                 const totalValue = btcValue + ethValue;
 
+                // Determine status classes for price changes
                 const btcStatusClass = btc24hChange >= 0 ? 'status-good' : 'status-danger';
                 const ethStatusClass = eth24hChange >= 0 ? 'status-good' : 'status-danger';
                 const btcChangeSymbol = btc24hChange >= 0 ? '+' : '';
                 const ethChangeSymbol = eth24hChange >= 0 ? '+' : '';
 
-                btcElement.innerHTML = `<span class="${btcStatusClass}">${CRYPTO_HOLDINGS.bitcoin} BTC (~$${btcValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})})</span><br><small style="color: var(--text-on-dark-secondary); font-size: 0.8rem;">${btcChangeSymbol}${btc24hChange.toFixed(2)}% (24h)</small>`;
+                // Update the display
+                btcElement.innerHTML = `<span class="${btcStatusClass}">${CRYPTO_HOLDINGS.bitcoin} BTC (~$${btcValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})})</span><br><small style="color: var(--text-on-dark-secondary); font-size: 0.8rem;">$${btcPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${btcChangeSymbol}${btc24hChange.toFixed(2)}% (24h)</small>`;
                 
-                ethElement.innerHTML = `<span class="${ethStatusClass}">${CRYPTO_HOLDINGS.ethereum} ETH (~$${ethValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})})</span><br><small style="color: var(--text-on-dark-secondary); font-size: 0.8rem;">${ethChangeSymbol}${eth24hChange.toFixed(2)}% (24h)</small>`;
+                ethElement.innerHTML = `<span class="${ethStatusClass}">${CRYPTO_HOLDINGS.ethereum} ETH (~$${ethValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})})</span><br><small style="color: var(--text-on-dark-secondary); font-size: 0.8rem;">$${ethPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${ethChangeSymbol}${eth24hChange.toFixed(2)}% (24h)</small>`;
                 
                 totalElement.innerHTML = `<span class="status-good">~$${totalValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>`;
                 
+                // Update timestamp and source
                 const now = new Date();
-                updatedElement.innerHTML = `<span style="color: var(--status-good);">● Live</span> Updated: ${now.toLocaleTimeString()}`;
+                updatedElement.innerHTML = `<span style="color: var(--status-good);">● Live CoinGecko Data</span> Updated: ${now.toLocaleTimeString()}`;
+                dataSourceElement.textContent = 'Live Market Data';
                 
             } catch (error) {
-                console.error('Error updating crypto:', error);
-                updatedElement.textContent = 'Using cached prices';
+                console.error('Error fetching crypto prices:', error);
+                
+                // Show static fallback values
+                btcElement.innerHTML = `0.75 BTC (~$52,500.00)<br><small style="color: var(--text-on-dark-secondary); font-size: 0.8rem;">API Unavailable</small>`;
+                ethElement.innerHTML = `12 ETH (~$42,000.00)<br><small style="color: var(--text-on-dark-secondary); font-size: 0.8rem;">API Unavailable</small>`;
+                totalElement.innerHTML = `~$94,500.00`;
+                
+                updatedElement.innerHTML = `<span style="color: var(--status-warning);">● Offline Mode</span> Using cached data`;
+                dataSourceElement.textContent = 'Offline Mode';
             }
         }
 
-        async function updateStockPrices() {
+        async function fetchRealStockPrices() {
             const marketStatusEl = document.getElementById('market-status');
             const stockUpdatedEl = document.getElementById('stock-updated');
             
-            document.querySelectorAll('.stock-price').forEach(el => {
-                el.innerHTML = '<span class="crypto-loading">Updating...</span>';
-            });
-
-            await new Promise(resolve => setTimeout(resolve, 200 + Math.random() * 500));
-
             try {
-                const { stocks: stockData, marketOpen } = generateRealisticStockData();
-                
-                marketStatusEl.innerHTML = marketOpen 
-                    ? '<span style="color: var(--status-good);">● Market Open</span>'
-                    : '<span style="color: var(--status-warning);">● Market Closed</span>';
+                // Show loading states
+                document.querySelectorAll('.stock-price').forEach(el => {
+                    el.innerHTML = '<span class="crypto-loading">Loading...</span>';
+                });
 
+                // Fetch real stock data from your Vercel API
+                const response = await fetch(`${API_BASE_URL}/api/stocks?symbols=AAPL,GOOGL,TSLA`);
+                
+                if (!response.ok) {
+                    throw new Error(`Stock API error: ${response.status}`);
+                }
+                
+                const apiData = await response.json();
+                
+                // Check if we got an error response
+                if (apiData.error) {
+                    throw new Error(apiData.error);
+                }
+                
+                // Handle different API response formats
+                let stockData = {};
+                
+                if (apiData.source === 'finnhub') {
+                    // Finnhub format
+                    apiData.results.forEach(stock => {
+                        stockData[stock.symbol] = {
+                            price: stock.c, // current price
+                            change: stock.c - stock.pc, // current - previous close
+                            changePercent: ((stock.c - stock.pc) / stock.pc) * 100
+                        };
+                    });
+                } else if (apiData.source === 'alphavantage') {
+                    // Alpha Vantage format
+                    apiData.results.forEach((result, index) => {
+                        const symbols = ['AAPL', 'GOOGL', 'TSLA'];
+                        const quote = result['Global Quote'];
+                        if (quote) {
+                            stockData[symbols[index]] = {
+                                price: parseFloat(quote['05. price']),
+                                change: parseFloat(quote['09. change']),
+                                changePercent: parseFloat(quote['10. change percent'].replace('%', ''))
+                            };
+                        }
+                    });
+                } else {
+                    // Barchart format (assumed)
+                    if (apiData.results) {
+                        apiData.results.forEach(stock => {
+                            stockData[stock.symbol] = {
+                                price: stock.lastPrice,
+                                change: stock.netChange,
+                                changePercent: stock.percentChange
+                            };
+                        });
+                    }
+                }
+
+                // Update market status
+                const now = new Date();
+                marketStatusEl.innerHTML = '<span style="color: var(--status-good);">● Live Data</span>';
+
+                // Update each stock
                 Object.keys(STOCK_HOLDINGS).forEach(symbol => {
                     const holding = STOCK_HOLDINGS[symbol];
                     const stock = stockData[symbol];
                     
+                    if (stock && stock.price) {
+                        const currentPrice = stock.price;
+                        const marketValue = holding.shares * currentPrice;
+                        const dayGainValue = holding.shares * stock.change;
+                        const changePercent = stock.changePercent;
+                        
+                        // Update price
+                        const priceEl = document.querySelector(`.stock-price[data-symbol="${symbol}"]`);
+                        const statusClass = stock.change >= 0 ? 'status-good' : 'status-danger';
+                        const changeSymbol = stock.change >= 0 ? '+' : '';
+                        priceEl.innerHTML = `<span class="${statusClass}">$${currentPrice.toFixed(2)}</span><br><small style="color: var(--text-on-dark-secondary); font-size: 0.8rem;">${changeSymbol}${changePercent.toFixed(2)}%</small>`;
+                        
+                        // Update market value
+                        const valueEl = document.querySelector(`.stock-value[data-symbol="${symbol}"]`);
+                        valueEl.innerHTML = `<span class="${statusClass}">$${marketValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>`;
+                        
+                        // Update day's gain
+                        const gainEl = document.querySelector(`.stock-day-gain[data-symbol="${symbol}"]`);
+                        const gainStatusClass = dayGainValue >= 0 ? 'status-good' : 'status-danger';
+                        const gainSymbol = dayGainValue >= 0 ? '+' : '';
+                        gainEl.innerHTML = `<span class="${gainStatusClass}">${gainSymbol}$${Math.abs(dayGainValue).toFixed(2)}</span>`;
+                    }
+                });
+                
+                // Update timestamp
+                stockUpdatedEl.innerHTML = `<span style="color: var(--status-good);">● Live API Data</span> Updated: ${now.toLocaleTimeString()}`;
+                
+            } catch (error) {
+                console.error('Error fetching stock prices:', error);
+                
+                // Show fallback static values
+                marketStatusEl.innerHTML = '<span style="color: var(--status-warning);">● API Unavailable</span>';
+                
+                const fallbackData = {
+                    AAPL: { price: 190.50, change: 2.30 },
+                    GOOGL: { price: 141.20, change: -0.85 },
+                    TSLA: { price: 183.45, change: 5.20 }
+                };
+
+                Object.keys(STOCK_HOLDINGS).forEach(symbol => {
+                    const holding = STOCK_HOLDINGS[symbol];
+                    const stock = fallbackData[symbol];
+                    
                     const currentPrice = stock.price;
                     const marketValue = holding.shares * currentPrice;
-                    const dayGainValue = holding.shares * (stock.change);
-                    const changePercent = stock.changePercent;
+                    const changePercent = (stock.change / stock.price) * 100;
+                    const dayGainValue = holding.shares * stock.change;
                     
                     const priceEl = document.querySelector(`.stock-price[data-symbol="${symbol}"]`);
                     const statusClass = stock.change >= 0 ? 'status-good' : 'status-danger';
                     const changeSymbol = stock.change >= 0 ? '+' : '';
-                    priceEl.innerHTML = `<span class="${statusClass}">$${currentPrice.toFixed(2)}</span><br><small style="color: var(--text-on-dark-secondary); font-size: 0.8rem;">${changeSymbol}${changePercent.toFixed(2)}%</small>`;
+                    priceEl.innerHTML = `<span class="${statusClass}">$${currentPrice.toFixed(2)}</span><br><small style="color: var(--text-on-dark-secondary); font-size: 0.8rem;">${changeSymbol}${changePercent.toFixed(2)}% (cached)</small>`;
                     
                     const valueEl = document.querySelector(`.stock-value[data-symbol="${symbol}"]`);
                     valueEl.innerHTML = `<span class="${statusClass}">$${marketValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>`;
@@ -705,13 +738,7 @@
                     gainEl.innerHTML = `<span class="${gainStatusClass}">${gainSymbol}$${Math.abs(dayGainValue).toFixed(2)}</span>`;
                 });
                 
-                const now = new Date();
-                const statusText = marketOpen ? 'Live Market Data' : 'After Hours';
-                stockUpdatedEl.innerHTML = `<span style="color: ${marketOpen ? 'var(--status-good)' : 'var(--status-warning)'};">● ${statusText}</span> Updated: ${now.toLocaleTimeString()}`;
-                
-            } catch (error) {
-                console.error('Error updating stocks:', error);
-                stockUpdatedEl.textContent = 'Error updating stock data';
+                stockUpdatedEl.innerHTML = `<span style="color: var(--status-warning);">● Offline Mode</span> Using cached data`;
             }
         }
 
@@ -835,12 +862,12 @@
             showPage('home', document.querySelector('.nav-tab'));
             
             // Initialize market data
-            updateCryptoPrices();
-            updateStockPrices();
+            fetchRealCryptoPrices();
+            fetchRealStockPrices();
             
             // Auto-update every 30-60 seconds
-            setInterval(updateCryptoPrices, 60000);
-            setInterval(updateStockPrices, 30000);
+            setInterval(fetchRealCryptoPrices, 60000);
+            setInterval(fetchRealStockPrices, 30000);
             
             displayHomes(mockHomes);
             displayVehicles(mockVehicles);
