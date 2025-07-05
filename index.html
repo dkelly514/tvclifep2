@@ -48,10 +48,15 @@
             font-weight: 600;
             font-size: 0.8rem;
             padding: 0 12px;
+            position: relative;
         }
         .ai-btn:hover { transform: translateY(-1px); background: var(--accent-gold-light); box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3); }
         .ai-btn .icon { width: 16px; height: 16px; margin: 0; }
         .ai-btn-text { font-weight: 600; }
+        .ai-btn.active { background: var(--status-good); animation: pulse-btn 2s infinite; }
+        .ai-btn.processing { background: var(--status-warning); }
+        @keyframes pulse-btn { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        
         .sub-nav { display: flex; gap: 15px; border-bottom: 2px solid var(--border-color-dark); margin-bottom: 25px; padding-bottom: 15px; }
         .sub-nav-tab { background: none; border: none; color: var(--text-on-dark-secondary); font-size: 1rem; font-weight: 500; padding: 5px 10px; cursor: pointer; transition: color 0.2s ease; display: flex; align-items: center; }
         .sub-nav-tab:hover { color: var(--text-on-dark); }
@@ -97,17 +102,113 @@
             border-radius: 8px;
         }
 
-        /* [Remove floating actions styles - moved to header] */
-        .chat-box { display: none; position: fixed; bottom: 25px; right: 25px; width: 350px; height: 500px; background: var(--secondary-bg); border-radius: 15px; border: 1px solid var(--border-color-dark); z-index: 1000; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.6); overflow: hidden; }
+        /* Chat Box Styling */
+        .chat-box { 
+            display: none; 
+            position: fixed; 
+            bottom: 25px; 
+            right: 25px; 
+            width: 380px; 
+            height: 550px; 
+            background: var(--secondary-bg); 
+            border-radius: 15px; 
+            border: 1px solid var(--border-color-dark); 
+            z-index: 1000; 
+            flex-direction: column; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6); 
+            overflow: hidden; 
+        }
         .chat-box.active { display: flex; animation: slideUp 0.3s ease; }
-        .chat-header { padding: 15px; background: var(--primary-bg); text-align: center; font-weight: 600; color: var(--accent-gold-light); }
-        .chat-body { flex-grow: 1; padding: 15px; overflow-y: auto; }
-        .voice-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); z-index: 2000; align-items: center; justify-content: center; text-align: center; }
+        .chat-header { 
+            padding: 15px; 
+            background: var(--primary-bg); 
+            text-align: center; 
+            font-weight: 600; 
+            color: var(--accent-gold-light); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        .chat-body { 
+            flex-grow: 1; 
+            padding: 15px; 
+            overflow-y: auto; 
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat-message {
+            padding: 10px 12px;
+            border-radius: 12px;
+            max-width: 85%;
+            word-wrap: break-word;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        .user-message {
+            background: var(--accent-gold);
+            color: var(--primary-bg);
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        .ai-message {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--text-on-dark);
+            border-left: 3px solid var(--accent-gold);
+            align-self: flex-start;
+        }
+        .typing-indicator {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--accent-gold);
+            align-self: flex-start;
+            border-left: 3px solid var(--accent-gold);
+            font-style: italic;
+            display: none;
+        }
+        
+        /* Voice Modal */
+        .voice-modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0, 0, 0, 0.8); 
+            backdrop-filter: blur(10px); 
+            z-index: 2000; 
+            align-items: center; 
+            justify-content: center; 
+            text-align: center; 
+        }
         .voice-modal.active { display: flex; animation: fadeIn 0.3s ease; }
         .voice-content { color: white; }
-        .voice-icon { width: 120px; height: 120px; color: var(--accent-gold-light); animation: pulse 1.5s infinite ease-in-out; }
-        .voice-modal h2 { font-size: 2rem; margin-top: 20px; color: var(--accent-gold-light); }
-        .close-voice-modal { position: absolute; top: 30px; right: 30px; font-size: 2.5rem; color: #fff; cursor: pointer; border: none; background: none; }
+        .voice-icon { 
+            width: 120px; 
+            height: 120px; 
+            color: var(--accent-gold-light); 
+            animation: pulse 1.5s infinite ease-in-out; 
+        }
+        .voice-modal h2 { 
+            font-size: 2rem; 
+            margin-top: 20px; 
+            color: var(--accent-gold-light); 
+        }
+        .voice-modal p {
+            font-size: 1.1rem;
+            margin-top: 10px;
+            color: #ccc;
+        }
+        .close-voice-modal { 
+            position: absolute; 
+            top: 30px; 
+            right: 30px; 
+            font-size: 2.5rem; 
+            color: #fff; 
+            cursor: pointer; 
+            border: none; 
+            background: none; 
+        }
         .close-voice-modal:hover { color: var(--accent-gold-light); }
         @keyframes pulse { 0% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 0.7; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -181,7 +282,6 @@
             .hero h1 { font-size: 2rem; }
             .sub-nav { flex-wrap: wrap; }
             .chat-box { width: 300px; height: 400px; }
-            .floating-actions { bottom: 15px; right: 15px; }
         }
     </style>
 </head>
@@ -534,17 +634,25 @@
            </div>
        </main>
     </div>
-    
-    <!-- [AI buttons moved to header] -->
 
     <div class="chat-box" id="ai-chat-box">
-        <div class="chat-header">AI Assistant</div>
-        <div class="chat-body">
-            <p style="color: var(--text-on-dark-secondary); font-size: 0.9rem;">Hello! I can help you optimize your insurance, analyze financial scenarios, or answer questions about your portfolio. What would you like to know?</p>
+        <div class="chat-header">
+            <span>AI Financial Assistant</span>
+            <button class="close-chat-btn" id="close-chat-btn" style="background: none; border: none; color: var(--accent-gold-light); font-size: 1.2rem; cursor: pointer; padding: 5px;">&times;</button>
+        </div>
+        <div class="chat-body" id="chat-messages">
+            <div class="ai-message">
+                <strong style="color: var(--accent-gold);">🤖 TrueAI Assistant</strong><br>
+                <span style="color: var(--text-on-dark-secondary); font-size: 0.9rem;">Hi there! I'm your AI financial assistant. I can help you with portfolio analysis, insurance optimization, and financial planning. Try asking me something like:</span><br><br>
+                <span style="color: var(--accent-gold-light); font-size: 0.85rem;">• "Analyze my portfolio"<br>• "How can I save on insurance?"<br>• "Should I refinance my home?"<br>• "What's my net worth?"</span>
+            </div>
+        </div>
+        <div class="typing-indicator" id="typing-indicator">
+            <strong style="color: var(--accent-gold);">🤖 TrueAI is typing...</strong>
         </div>
         <div class="chat-input">
-            <input type="text" placeholder="Ask me anything..." onkeypress="if(event.key==='Enter') alert('Chat functionality: In a real implementation, this would send your message to the AI assistant for personalized financial advice.')">
-            <button class="btn">Send</button>
+            <input type="text" id="chat-message-input" placeholder="Ask me about your finances..." onkeypress="if(event.key==='Enter') sendChatMessage()">
+            <button class="btn" onclick="sendChatMessage()">Send</button>
         </div>
     </div>
 
@@ -552,8 +660,8 @@
         <button class="close-voice-modal" id="close-voice-btn" aria-label="Close Voice AI">&times;</button>
         <div class="voice-content">
             <svg class="voice-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m12 0v-1.5a6 6 0 0 0-6-6v0a6 6 0 0 0-6 6v1.5m6 7.5v-1.5" /></svg>
-            <h2>Listening...</h2>
-            <p>How can I help you today?</p>
+            <h2 id="voice-status">Listening...</h2>
+            <p id="voice-text">How can I help you today?</p>
         </div>
     </div>
 
@@ -570,8 +678,49 @@
             TSLA: { shares: 100, costBasis: 244.00 }
         };
 
-        // --- API Configuration ---
-        const API_BASE_URL = 'https://tvclifep2.vercel.app'; // Direct URL instead of relative
+        // --- AI Assistant Configuration ---
+        const AI_RESPONSES = {
+            // Portfolio related
+            'portfolio': 'Based on your current holdings, you have $28,575 in stocks, ~$32,000 in crypto, and $228,050 in retirement accounts. Your total portfolio is approximately $288,625. Your tech allocation is 68% - I recommend diversifying into healthcare and energy sectors.',
+            'analyze portfolio': 'Your portfolio shows strong growth potential but high tech concentration. AAPL is up 17.6%, GOOGL up 38.5%, but TSLA down 24.8%. Consider rebalancing: reduce tech to 50%, add healthcare ETFs and energy stocks for better risk management.',
+            'diversification': 'Your current portfolio is 68% tech-heavy. I recommend: 40% tech, 25% healthcare (XLV), 15% financials (XLF), 10% energy (XLE), 10% bonds (SCHZ). This reduces volatility while maintaining growth potential.',
+            'stocks': 'Your stock portfolio is worth $28,575 today. AAPL (+$1.85, 1.0%) and GOOGL (+$2.15, 1.5%) are performing well, while TSLA is down (-$3.45, -1.8%). Consider taking profits on GOOGL and adding defensive positions.',
+            
+            // Real estate related
+            'refinance': 'Excellent timing! Your home equity of $220K and strong credit qualify you for 3.75% rates. Monthly savings: $288, lifetime savings: $82,900. I found 3 pre-approved lenders offering no-closing-cost options.',
+            'home value': 'Your property at 123 Peachtree Lane is valued at $535,000 (up 8.2% YoY). Market indicators show continued appreciation. Your $220K equity puts you in the top 25% of Atlanta homeowners.',
+            'mortgage': 'Current mortgage: $315K at 4.15%. Market rates dropped to 3.75%. Refinancing saves $288/month ($3,456/year). Break-even point: 18 months. I can connect you with pre-approved lenders immediately.',
+            
+            // Insurance related
+            'insurance': 'I found $1,280 in annual savings across your policies! Your auto insurance can drop $420/year with Geico, home insurance $380/year with State Farm, and adding an umbrella policy costs just $240/year for $1M extra coverage.',
+            'auto insurance': 'Your Honda CR-V insurance costs $1,680/year. I found quotes $35-65/month lower with Geico ($1,260/year) and Progressive ($1,200/year). Your clean driving record qualifies for maximum discounts.',
+            'home insurance': 'Your current premium increased 8% to $1,840/year. I found State Farm offering identical coverage for $1,460/year. The $380 annual savings includes 12% multi-policy discount when bundled with auto.',
+            
+            // Vehicle related
+            'vehicle': 'Your 2022 CR-V has positive equity of $11,300. Trade-in value: $29,500. Consider the Honda Accord Hybrid - your equity covers the difference, monthly payment drops to $410, and you save $85/month in fuel costs.',
+            'car loan': 'Current loan balance: $18,200 at 5.9%. Your CR-V value: $29,500. Positive equity: $11,300. You could trade up to a 2025 Accord Hybrid with similar payments but 50% better fuel economy.',
+            'trade in': 'Smart move! Your CR-V equity of $11,300 opens great options. The Accord Hybrid needs just $24,700 financing ($410/mo) and saves $1,020/year in gas. The RAV4 costs $435/mo but holds value better.',
+            
+            // Financial planning
+            'net worth': 'Your total net worth is approximately $796,325: Home equity $220K, retirement $228K, taxable investments $60K, vehicle equity $11K, business equity $277K. You\'re in the top 15% for your age group!',
+            'retirement': 'Your retirement savings of $228,050 is strong! At current $1,200/month contributions, you\'ll have $1.2M by age 65. Consider maxing your 401k ($23K/year) to reduce taxes and hit $1.8M target.',
+            'savings': 'I identified $3,847 in annual savings: Insurance $1,280, refinancing $3,456, vehicle efficiency $1,020. That\'s $320/month you could redirect to investments. Want me to automate this optimization?',
+            
+            // Business related
+            'business': 'Your business shows strong performance: $1.24M revenue, 38.9% profit margin ($485K). Growth rate of 15.2% exceeds industry average. Consider expanding your commercial property portfolio with current cash flow.',
+            'business insurance': 'Your commercial insurance costs $33,100/year across 5 policies. I found bundling opportunities with Liberty Mutual saving $2,840/year while increasing coverage. Your Workers\' Comp rate is 18% above market.',
+            'fleet': 'Your 3-vehicle fleet is valued at $135K. The 2021 Transit has low utilization (avg 287 miles/week). Consider selling it for $38K and leasing a smaller van when needed - saves $4,200/year in insurance/maintenance.',
+            
+            // Crypto related
+            'crypto': 'Your crypto portfolio (~$32K) represents 11% of total investments. BTC position: 0.75 BTC (~$32,062), ETH position: 12 ETH (~$39,000). Consider taking 25% profits and diversifying into traditional assets for better balance.',
+            'bitcoin': 'Your 0.75 BTC position is worth approximately $32,062 today (+2.8%). Bitcoin represents 45% of your crypto allocation. Consider DCA selling 0.1 BTC monthly if price hits $50K to lock in gains.',
+            'ethereum': 'Your 12 ETH position (~$39,000) is performing well (+4.1% today). ETH 2.0 staking rewards average 5.2% APY. Consider staking 8 ETH while keeping 4 ETH liquid for trading opportunities.',
+            
+            // Default responses
+            'hello': 'Hello! I\'m your AI financial assistant. I have access to all your financial data and can help optimize your portfolio, insurance, loans, and overall financial health. What would you like to analyze today?',
+            'help': 'I can help you with: Portfolio analysis & rebalancing, Insurance optimization, Mortgage refinancing, Vehicle financing, Business financial planning, Retirement planning, Tax optimization, Net worth calculations. What interests you most?',
+            'default': 'I understand you\'re asking about your finances. Could you be more specific? I can help with portfolio analysis, insurance savings, refinancing options, vehicle decisions, business optimization, or retirement planning. What\'s your priority?'
+        };
 
         // --- Real API calls with better error handling ---
         async function fetchRealCryptoPrices() {
@@ -716,6 +865,140 @@
             }
         }
 
+        // --- AI Chat Functions ---
+        function getAIResponse(userMessage) {
+            const message = userMessage.toLowerCase();
+            
+            // Check for specific keywords and return appropriate responses
+            for (const [keyword, response] of Object.entries(AI_RESPONSES)) {
+                if (message.includes(keyword)) {
+                    return response;
+                }
+            }
+            
+            // Default response if no keywords match
+            return AI_RESPONSES.default;
+        }
+
+        function addChatMessage(message, isUser = false) {
+            const chatBody = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = isUser ? 'chat-message user-message' : 'chat-message ai-message';
+            
+            if (isUser) {
+                messageDiv.innerHTML = `<strong>You:</strong><br>${message}`;
+            } else {
+                messageDiv.innerHTML = `<strong style="color: var(--accent-gold);">🤖 TrueAI:</strong><br>${message}`;
+            }
+            
+            chatBody.appendChild(messageDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            typingIndicator.style.display = 'block';
+            const chatBody = document.getElementById('chat-messages');
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            typingIndicator.style.display = 'none';
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chat-message-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addChatMessage(message, true);
+            input.value = '';
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Simulate AI thinking time
+            setTimeout(() => {
+                hideTypingIndicator();
+                const aiResponse = getAIResponse(message);
+                addChatMessage(aiResponse, false);
+            }, 1000 + Math.random() * 2000); // 1-3 second delay
+        }
+
+        // --- Voice AI Functions ---
+        let voiceRecognition = null;
+        let isVoiceActive = false;
+
+        function initializeVoiceAI() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                voiceRecognition = new SpeechRecognition();
+                voiceRecognition.continuous = false;
+                voiceRecognition.interimResults = false;
+                voiceRecognition.lang = 'en-US';
+
+                voiceRecognition.onstart = function() {
+                    isVoiceActive = true;
+                    document.getElementById('voice-status').textContent = 'Listening...';
+                    document.getElementById('voice-text').textContent = 'Speak your financial question';
+                    document.getElementById('voice-btn').classList.add('active');
+                };
+
+                voiceRecognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('voice-text').textContent = `You said: "${transcript}"`;
+                    document.getElementById('voice-status').textContent = 'Processing...';
+                    
+                    // Process the voice input
+                    setTimeout(() => {
+                        const response = getAIResponse(transcript);
+                        document.getElementById('voice-status').textContent = 'AI Response:';
+                        document.getElementById('voice-text').textContent = response;
+                        
+                        // Auto-close after 5 seconds
+                        setTimeout(() => {
+                            closeVoiceModal();
+                        }, 5000);
+                    }, 1000);
+                };
+
+                voiceRecognition.onerror = function(event) {
+                    document.getElementById('voice-status').textContent = 'Error occurred';
+                    document.getElementById('voice-text').textContent = 'Please try again';
+                    isVoiceActive = false;
+                    document.getElementById('voice-btn').classList.remove('active');
+                };
+
+                voiceRecognition.onend = function() {
+                    isVoiceActive = false;
+                    document.getElementById('voice-btn').classList.remove('active');
+                };
+            }
+        }
+
+        function startVoiceRecognition() {
+            if (voiceRecognition && !isVoiceActive) {
+                try {
+                    voiceRecognition.start();
+                } catch (error) {
+                    console.error('Voice recognition error:', error);
+                    document.getElementById('voice-status').textContent = 'Voice not supported';
+                    document.getElementById('voice-text').textContent = 'Please use text chat instead';
+                }
+            }
+        }
+
+        function closeVoiceModal() {
+            const voiceModal = document.getElementById('voice-ai-modal');
+            voiceModal.classList.remove('active');
+            if (voiceRecognition && isVoiceActive) {
+                voiceRecognition.stop();
+            }
+        }
+
         // --- Navigation Logic ---
         function showPage(pageId, clickedButton) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -822,64 +1105,262 @@
             const homesList = document.getElementById('homes-list');
             if (!homesList) return;
             if (homes.length === 0) { homesList.innerHTML = '<p style="color: var(--text-on-dark-secondary); text-align: center; padding: 20px;">No homes found matching your criteria.</p>'; return; }
-            homesList.innerHTML = homes.map(home => `<div style="border: 1px solid var(--border-color-dark); border-radius: 8px; padding: 15px; margin-bottom: 15px; background: var(--primary-bg); display: flex; gap: 15px; align-items: center;"><img src="${home.imageUrl}" alt="${home.address}" style="width: 120px; height: 80px; object-fit: cover; border-radius: 6px;"><div style="flex: 1;"><h4 style="color: var(--accent-gold-light); margin-bottom: 8px; font-size: 1.1rem;">${home.address}</h4><p style="color: var(--text-on-dark-secondary); font-size: 0.9rem; margin-bottom: 8px;">${home.description}</p><div style="display: flex; gap: 15px; font-size: 0.85rem; color: var(--text-on-dark-secondary);"><span>${home.beds} bed</span><span>${home.baths} bath</span><span>${home.sqft.toLocaleString()} sqft</span><span>Built ${home.yearBuilt}</span></div></div><div style="text-align: right;"><div style="font-size: 1.4rem; font-weight: 700; color: var(--status-good); margin-bottom: 5px;">$${home.price.toLocaleString()}</div><div style="font-size: 0.8rem; color: var(--text-on-dark-secondary);">${home.daysOnMarket} days on market</div><div style="font-size: 0.8rem; color: var(--accent-gold);">via ${home.source}</div></div></div>`).join('');
+            homesList.innerHTML = homes.map(home => `<div style="border: 1px solid var(--border-color-dark); border-radius: 8px; padding: 15px; margin-bottom: 15px; background: var(--primary-bg); display: flex; gap: 15px; align-items: center;"><img src="${home.imageUrl}" alt="${home.address}" style="width: 120px; height: 80px; object-fit: cover; border-radius: 6px;"><div style="flex: 1;"><h4 style="color: var(--accent-gold-light); margin-bottom: 8px; font-size: 1.1rem;">${home.address}</h4><p style="color: var(--text-on-dark-secondary); font-size: 0.9rem; margin-bottom: 8px;">${home.description}</p><div style="display: flex; gap: 15px; font-size: 0.85rem; color: var(--text-on-dark-secondary);"><span>${home.beds} bed</span><span>${home.baths} bath</span><span>${home.sqft.toLocaleString()} sqft</span><span>Built ${home.yearBuilt}</span></div></div><div style="text-align: right;"><div style="font-size: 1.4rem; font-weight: 700; color: var(--status-good); margin-bottom: 5px;">${home.price.toLocaleString()}</div><div style="font-size: 0.8rem; color: var(--text-on-dark-secondary);">${home.daysOnMarket} days on market</div><div style="font-size: 0.8rem; color: var(--accent-gold);">via ${home.source}</div></div></div>`).join('');
         }
 
         function displayVehicles(vehicles) {
             const vehiclesList = document.getElementById('vehicles-list');
             if (!vehiclesList) return;
             if (vehicles.length === 0) { vehiclesList.innerHTML = '<p style="color: var(--text-on-dark-secondary); text-align: center; padding: 20px;">No vehicles found matching your criteria.</p>'; return; }
-            vehiclesList.innerHTML = vehicles.map(vehicle => `<div style="border: 1px solid var(--border-color-dark); border-radius: 8px; padding: 15px; margin-bottom: 15px; background: var(--primary-bg); display: flex; gap: 15px; align-items: center;"><img src="${vehicle.imageUrl}" alt="${vehicle.year} ${vehicle.make} ${vehicle.model}" style="width: 120px; height: 80px; object-fit: cover; border-radius: 6px;"><div style="flex: 1;"><h4 style="color: var(--accent-gold-light); margin-bottom: 8px; font-size: 1.1rem;">${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim}</h4><p style="color: var(--text-on-dark-secondary); font-size: 0.9rem; margin-bottom: 8px;">${vehicle.description}</p><div style="display: flex; gap: 15px; font-size: 0.85rem; color: var(--text-on-dark-secondary);"><span>${vehicle.mileage.toLocaleString()} miles</span><span>${vehicle.mpg} MPG</span><span>⭐ ${vehicle.carfaxScore}/5.0</span></div></div><div style="text-align: right;"><div style="font-size: 1.4rem; font-weight: 700; color: var(--status-good); margin-bottom: 5px;">$${vehicle.price.toLocaleString()}</div><div style="font-size: 0.8rem; color: var(--text-on-dark-secondary);">VIN: ${vehicle.vin}</div><div style="font-size: 0.8rem; color: var(--accent-gold);">via ${vehicle.source}</div></div></div>`).join('');
+            vehiclesList.innerHTML = vehicles.map(vehicle => `<div style="border: 1px solid var(--border-color-dark); border-radius: 8px; padding: 15px; margin-bottom: 15px; background: var(--primary-bg); display: flex; gap: 15px; align-items: center;"><img src="${vehicle.imageUrl}" alt="${vehicle.year} ${vehicle.make} ${vehicle.model}" style="width: 120px; height: 80px; object-fit: cover; border-radius: 6px;"><div style="flex: 1;"><h4 style="color: var(--accent-gold-light); margin-bottom: 8px; font-size: 1.1rem;">${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim}</h4><p style="color: var(--text-on-dark-secondary); font-size: 0.9rem; margin-bottom: 8px;">${vehicle.description}</p><div style="display: flex; gap: 15px; font-size: 0.85rem; color: var(--text-on-dark-secondary);"><span>${vehicle.mileage.toLocaleString()} miles</span><span>${vehicle.mpg} MPG</span><span>⭐ ${vehicle.carfaxScore}/5.0</span></div></div><div style="text-align: right;"><div style="font-size: 1.4rem; font-weight: 700; color: var(--status-good); margin-bottom: 5px;">${vehicle.price.toLocaleString()}</div><div style="font-size: 0.8rem; color: var(--text-on-dark-secondary);">VIN: ${vehicle.vin}</div><div style="font-size: 0.8rem; color: var(--accent-gold);">via ${vehicle.source}</div></div></div>`).join('');
         }
 
+        // --- Enhanced Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialize page navigation
             showPage('home', document.querySelector('.nav-tab'));
             
-            // Initialize market data
+            // Initialize market data with live updates
             fetchRealCryptoPrices();
             fetchRealStockPrices();
             
-            // Auto-update every 30-60 seconds
+            // Auto-update market data every 30-60 seconds
             setInterval(fetchRealCryptoPrices, 60000);
             setInterval(fetchRealStockPrices, 30000);
             
+            // Initialize AI features
+            initializeVoiceAI();
+            
+            // Display mock data
             displayHomes(mockHomes);
             displayVehicles(mockVehicles);
 
-            // Chat and Voice functionality
+            // === Chat and Voice Event Listeners ===
             const chatBtn = document.getElementById('chat-btn');
             const chatBox = document.getElementById('ai-chat-box');
-            if (chatBtn && chatBox) chatBtn.addEventListener('click', () => chatBox.classList.toggle('active'));
+            const closeChatBtn = document.getElementById('close-chat-btn');
+            
+            if (chatBtn && chatBox) {
+                chatBtn.addEventListener('click', () => {
+                    chatBox.classList.toggle('active');
+                    if (chatBox.classList.contains('active')) {
+                        chatBtn.classList.add('active');
+                    } else {
+                        chatBtn.classList.remove('active');
+                    }
+                });
+            }
+            
+            if (closeChatBtn && chatBox) {
+                closeChatBtn.addEventListener('click', () => {
+                    chatBox.classList.remove('active');
+                    chatBtn.classList.remove('active');
+                });
+            }
 
             const voiceBtn = document.getElementById('voice-btn');
             const voiceModal = document.getElementById('voice-ai-modal');
             const closeVoiceBtn = document.getElementById('close-voice-btn');
-            if (voiceBtn && voiceModal && closeVoiceBtn) {
-                voiceBtn.addEventListener('click', () => voiceModal.classList.add('active'));
-                closeVoiceBtn.addEventListener('click', () => voiceModal.classList.remove('active'));
-                voiceModal.addEventListener('click', (e) => { if (e.target === voiceModal) voiceModal.classList.remove('active'); });
+            
+            if (voiceBtn && voiceModal) {
+                voiceBtn.addEventListener('click', () => {
+                    voiceModal.classList.add('active');
+                    setTimeout(() => startVoiceRecognition(), 500);
+                });
+            }
+            
+            if (closeVoiceBtn && voiceModal) {
+                closeVoiceBtn.addEventListener('click', closeVoiceModal);
+                voiceModal.addEventListener('click', (e) => {
+                    if (e.target === voiceModal) closeVoiceModal();
+                });
             }
 
-            // VIN functionality
+            // === VIN Scanner Event Listeners ===
             const vinInput = document.getElementById('vin-input');
             const analyzeBtn = document.getElementById('analyze-vin-btn');
+            
             if (vinInput && analyzeBtn) {
                 analyzeBtn.addEventListener('click', scanVIN);
-                vinInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') scanVIN(); });
+                vinInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') scanVIN();
+                });
             }
 
-            // Search functionality
+            // === Search Functionality Event Listeners ===
             const homeSearch = document.getElementById('home-search');
             const vehicleSearch = document.getElementById('vehicle-search');
-            if (homeSearch) homeSearch.addEventListener('keypress', (e) => { if (e.key === 'Enter') filterHomes(); });
-            if (vehicleSearch) vehicleSearch.addEventListener('keypress', (e) => { if (e.key === 'Enter') filterVehicles(); });
             
+            if (homeSearch) {
+                homeSearch.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') filterHomes();
+                });
+            }
+            
+            if (vehicleSearch) {
+                vehicleSearch.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') filterVehicles();
+                });
+            }
+            
+            // Filter change listeners
             const homePriceFilter = document.getElementById('home-price-filter');
             const vehiclePriceFilter = document.getElementById('vehicle-price-filter');
             const vehicleTypeFilter = document.getElementById('vehicle-type-filter');
+            
             if (homePriceFilter) homePriceFilter.addEventListener('change', filterHomes);
             if (vehiclePriceFilter) vehiclePriceFilter.addEventListener('change', filterVehicles);
             if (vehicleTypeFilter) vehicleTypeFilter.addEventListener('change', filterVehicles);
+
+            // === Enhanced AI Demo Features ===
+            // Add some sample AI interactions for demonstration
+            setTimeout(() => {
+                if (Math.random() < 0.3) { // 30% chance to show demo notification
+                    showAIInsightNotification();
+                }
+            }, 5000);
+        });
+
+        // --- Demo AI Insight Notifications ---
+        function showAIInsightNotification() {
+            const notifications = [
+                "💡 AI detected potential $420/year savings on your auto insurance",
+                "🏠 Mortgage rates dropped 0.1% - refinancing could save you $288/month",
+                "📈 Your GOOGL position is up 38% - consider taking profits",
+                "🚗 Your CR-V has strong equity position for vehicle upgrade",
+                "💰 Business insurance audit found $2,840 in potential savings"
+            ];
+            
+            const randomNotification = notifications[Math.floor(Math.random() * notifications.length)];
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--accent-gold);
+                color: var(--primary-bg);
+                padding: 15px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 1001;
+                max-width: 300px;
+                font-weight: 600;
+                cursor: pointer;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+            `;
+            notification.textContent = randomNotification;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 5000);
+            
+            // Click to open chat
+            notification.addEventListener('click', () => {
+                const chatBox = document.getElementById('ai-chat-box');
+                const chatBtn = document.getElementById('chat-btn');
+                if (chatBox && chatBtn) {
+                    chatBox.classList.add('active');
+                    chatBtn.classList.add('active');
+                }
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            });
+        }
+
+        // --- Quick Actions for Demo ---
+        function simulateAIAnalysis(type) {
+            const chatBox = document.getElementById('ai-chat-box');
+            const chatBtn = document.getElementById('chat-btn');
+            
+            if (chatBox && chatBtn) {
+                chatBox.classList.add('active');
+                chatBtn.classList.add('active');
+                
+                // Add the analysis request
+                setTimeout(() => {
+                    const queries = {
+                        portfolio: 'Analyze my portfolio',
+                        insurance: 'How can I save on insurance?',
+                        refinance: 'Should I refinance my home?',
+                        vehicle: 'Is it a good time to trade in my car?'
+                    };
+                    
+                    const query = queries[type] || 'Help me optimize my finances';
+                    addChatMessage(query, true);
+                    
+                    setTimeout(() => {
+                        showTypingIndicator();
+                        setTimeout(() => {
+                            hideTypingIndicator();
+                            const response = getAIResponse(query);
+                            addChatMessage(response, false);
+                        }, 2000);
+                    }, 500);
+                }, 500);
+            }
+        }
+
+        // Expose functions globally for onclick handlers
+        window.showPage = showPage;
+        window.showSubPage = showSubPage;
+        window.filterHomes = filterHomes;
+        window.filterVehicles = filterVehicles;
+        window.sendChatMessage = sendChatMessage;
+        window.simulateAIAnalysis = simulateAIAnalysis;
+        
+        // Add keyboard shortcuts for power users
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + K to open chat
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                const chatBox = document.getElementById('ai-chat-box');
+                const chatBtn = document.getElementById('chat-btn');
+                if (chatBox && chatBtn) {
+                    chatBox.classList.toggle('active');
+                    if (chatBox.classList.contains('active')) {
+                        chatBtn.classList.add('active');
+                        document.getElementById('chat-message-input').focus();
+                    } else {
+                        chatBtn.classList.remove('active');
+                    }
+                }
+            }
+            
+            // Escape to close modals
+            if (e.key === 'Escape') {
+                const chatBox = document.getElementById('ai-chat-box');
+                const voiceModal = document.getElementById('voice-ai-modal');
+                const chatBtn = document.getElementById('chat-btn');
+                
+                if (chatBox && chatBox.classList.contains('active')) {
+                    chatBox.classList.remove('active');
+                    chatBtn.classList.remove('active');
+                }
+                
+                if (voiceModal && voiceModal.classList.contains('active')) {
+                    closeVoiceModal();
+                }
+            }
         });
     </script>
 </body>
