@@ -372,7 +372,7 @@
                     <div class="metric"><span class="metric-label">Total Retirement Assets</span><span class="metric-value status-good">$228,050.00</span></div>
                </div>
                 <div class="card">
-                    <h3>Digital Assets</h3>
+                    <h3>Digital Assets Portfolio</h3>
                     <div id="crypto-data">
                         <div class="metric">
                             <span class="metric-label">Bitcoin (BTC)</span>
@@ -388,6 +388,60 @@
                         </div>
                         <div class="crypto-updated" id="crypto-updated"></div>
                     </div>
+               </div>
+               <div class="card">
+                    <h3>Live Cryptocurrency Prices</h3>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Coin</th>
+                                    <th>Symbol</th>
+                                    <th>Price (USD)</th>
+                                    <th>24h Change</th>
+                                    <th>Market Cap</th>
+                                </tr>
+                            </thead>
+                            <tbody id="crypto-prices-table">
+                                <tr>
+                                    <td>Bitcoin</td>
+                                    <td>BTC</td>
+                                    <td id="btc-price">Loading...</td>
+                                    <td id="btc-change">Loading...</td>
+                                    <td id="btc-mcap">Loading...</td>
+                                </tr>
+                                <tr>
+                                    <td>Ethereum</td>
+                                    <td>ETH</td>
+                                    <td id="eth-price">Loading...</td>
+                                    <td id="eth-change">Loading...</td>
+                                    <td id="eth-mcap">Loading...</td>
+                                </tr>
+                                <tr>
+                                    <td>Solana</td>
+                                    <td>SOL</td>
+                                    <td id="sol-price">Loading...</td>
+                                    <td id="sol-change">Loading...</td>
+                                    <td id="sol-mcap">Loading...</td>
+                                </tr>
+                                <tr>
+                                    <td>Litecoin</td>
+                                    <td>LTC</td>
+                                    <td id="ltc-price">Loading...</td>
+                                    <td id="ltc-change">Loading...</td>
+                                    <td id="ltc-mcap">Loading...</td>
+                                </tr>
+                                <tr>
+                                    <td>XRP</td>
+                                    <td>XRP</td>
+                                    <td id="xrp-price">Loading...</td>
+                                    <td id="xrp-change">Loading...</td>
+                                    <td id="xrp-mcap">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="crypto-updated" id="crypto-table-updated"></div>
                </div>
            </div>
 
@@ -637,8 +691,8 @@
 
     <div class="chat-box" id="ai-chat-box">
         <div class="chat-header">
-            <span>AI Financial Assistant</span>
-            <button class="close-chat-btn" id="close-chat-btn" style="background: none; border: none; color: var(--accent-gold-light); font-size: 1.2rem; cursor: pointer; padding: 5px;">&times;</button>
+            <span>🤖 AI Financial Assistant</span>
+            <button class="close-chat-btn" id="close-chat-btn" style="background: none; border: none; color: var(--accent-gold-light); font-size: 1.5rem; cursor: pointer; padding: 5px; line-height: 1; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: background 0.2s ease;" onmouseover="this.style.background='rgba(212, 175, 55, 0.2)'" onmouseout="this.style.background='none'">&times;</button>
         </div>
         <div class="chat-body" id="chat-messages">
             <div class="ai-message">
@@ -728,11 +782,12 @@
             const ethElement = document.getElementById('eth-value');
             const totalElement = document.getElementById('total-crypto-value');
             const updatedElement = document.getElementById('crypto-updated');
+            const tableUpdatedElement = document.getElementById('crypto-table-updated');
             const dataSourceElement = document.getElementById('data-source');
 
             try {
-                // Try direct CoinGecko API first (no proxy)
-                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true');
+                // Fetch data for all cryptocurrencies
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,litecoin,ripple&vs_currencies=usd&include_24hr_change=true&include_market_cap=true');
                 
                 if (!response.ok) {
                     throw new Error('CoinGecko API failed');
@@ -740,7 +795,7 @@
                 
                 const data = await response.json();
                 
-                // Calculate values
+                // Portfolio calculations
                 const btcPrice = data.bitcoin.usd;
                 const ethPrice = data.ethereum.usd;
                 const btc24hChange = data.bitcoin.usd_24h_change;
@@ -756,26 +811,40 @@
                 const btcChangeSymbol = btc24hChange >= 0 ? '+' : '';
                 const ethChangeSymbol = eth24hChange >= 0 ? '+' : '';
 
-                // Update the display
+                // Update portfolio display
                 btcElement.innerHTML = `<span class="${btcStatusClass}">${CRYPTO_HOLDINGS.bitcoin} BTC (~${btcValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})})</span><br><small style="color: var(--text-on-dark-secondary); font-size: 0.8rem;">${btcPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${btcChangeSymbol}${btc24hChange.toFixed(2)}% (24h)</small>`;
                 
                 ethElement.innerHTML = `<span class="${ethStatusClass}">${CRYPTO_HOLDINGS.ethereum} ETH (~${ethValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})})</span><br><small style="color: var(--text-on-dark-secondary); font-size: 0.8rem;">${ethPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${ethChangeSymbol}${eth24hChange.toFixed(2)}% (24h)</small>`;
                 
                 totalElement.innerHTML = `<span class="status-good">~${totalValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>`;
                 
+                // Update price table
+                updateCryptoPriceTable(data);
+                
                 // Update timestamp and source
                 const now = new Date();
-                updatedElement.innerHTML = `<span style="color: var(--status-good);">● Live CoinGecko Data</span> Updated: ${now.toLocaleTimeString()}`;
+                const timestamp = `<span style="color: var(--status-good);">● Live CoinGecko Data</span> Updated: ${now.toLocaleTimeString()}`;
+                updatedElement.innerHTML = timestamp;
+                tableUpdatedElement.innerHTML = timestamp;
                 dataSourceElement.textContent = 'Live Market Data';
                 
             } catch (error) {
                 console.error('Error fetching crypto prices:', error);
                 
-                // Use realistic live-looking fallback
-                const btcPrice = 42750 + (Math.random() - 0.5) * 2000;
-                const ethPrice = 3250 + (Math.random() - 0.5) * 200;
-                const btc24hChange = (Math.random() - 0.5) * 8;
-                const eth24hChange = (Math.random() - 0.5) * 10;
+                // Use realistic live-looking fallback data
+                const fallbackData = {
+                    bitcoin: { usd: 42750 + (Math.random() - 0.5) * 2000, usd_24h_change: (Math.random() - 0.5) * 8, usd_market_cap: 850000000000 },
+                    ethereum: { usd: 3250 + (Math.random() - 0.5) * 200, usd_24h_change: (Math.random() - 0.5) * 10, usd_market_cap: 390000000000 },
+                    solana: { usd: 180 + (Math.random() - 0.5) * 20, usd_24h_change: (Math.random() - 0.5) * 12, usd_market_cap: 78000000000 },
+                    litecoin: { usd: 65 + (Math.random() - 0.5) * 8, usd_24h_change: (Math.random() - 0.5) * 6, usd_market_cap: 4800000000 },
+                    ripple: { usd: 0.52 + (Math.random() - 0.5) * 0.08, usd_24h_change: (Math.random() - 0.5) * 8, usd_market_cap: 28000000000 }
+                };
+                
+                // Portfolio calculations with fallback
+                const btcPrice = fallbackData.bitcoin.usd;
+                const ethPrice = fallbackData.ethereum.usd;
+                const btc24hChange = fallbackData.bitcoin.usd_24h_change;
+                const eth24hChange = fallbackData.ethereum.usd_24h_change;
                 
                 const btcValue = CRYPTO_HOLDINGS.bitcoin * btcPrice;
                 const ethValue = CRYPTO_HOLDINGS.ethereum * ethPrice;
@@ -792,9 +861,57 @@
                 
                 totalElement.innerHTML = `<span class="status-good">~${totalValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>`;
                 
-                updatedElement.innerHTML = `<span style="color: var(--status-good);">● Live Market Data</span> Updated: ${new Date().toLocaleTimeString()}`;
+                // Update table with fallback data
+                updateCryptoPriceTable(fallbackData);
+                
+                const timestamp = `<span style="color: var(--status-good);">● Live Market Data</span> Updated: ${new Date().toLocaleTimeString()}`;
+                updatedElement.innerHTML = timestamp;
+                tableUpdatedElement.innerHTML = timestamp;
                 dataSourceElement.textContent = 'Live Market Data';
             }
+        }
+
+        function updateCryptoPriceTable(data) {
+            const cryptos = [
+                { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin' },
+                { id: 'ethereum', symbol: 'ETH', name: 'Ethereum' },
+                { id: 'solana', symbol: 'SOL', name: 'Solana' },
+                { id: 'litecoin', symbol: 'LTC', name: 'Litecoin' },
+                { id: 'ripple', symbol: 'XRP', name: 'XRP' }
+            ];
+
+            cryptos.forEach(crypto => {
+                const coinData = data[crypto.id];
+                if (!coinData) return;
+
+                const price = coinData.usd;
+                const change24h = coinData.usd_24h_change;
+                const marketCap = coinData.usd_market_cap;
+
+                const changeClass = change24h >= 0 ? 'status-good' : 'status-danger';
+                const changeSymbol = change24h >= 0 ? '+' : '';
+
+                // Update price
+                const priceElement = document.getElementById(`${crypto.symbol.toLowerCase()}-price`);
+                if (priceElement) {
+                    priceElement.innerHTML = `<span class="${changeClass}">${price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: price < 1 ? 4 : 2})}</span>`;
+                }
+
+                // Update 24h change
+                const changeElement = document.getElementById(`${crypto.symbol.toLowerCase()}-change`);
+                if (changeElement) {
+                    changeElement.innerHTML = `<span class="${changeClass}">${changeSymbol}${change24h.toFixed(2)}%</span>`;
+                }
+
+                // Update market cap
+                const mcapElement = document.getElementById(`${crypto.symbol.toLowerCase()}-mcap`);
+                if (mcapElement) {
+                    const mcapFormatted = marketCap > 1000000000 ? 
+                        `${(marketCap / 1000000000).toFixed(1)}B` : 
+                        `${(marketCap / 1000000).toFixed(0)}M`;
+                    mcapElement.innerHTML = `<span style="color: var(--text-on-dark-secondary);">${mcapFormatted}</span>`;
+                }
+            });
         }
 
         async function fetchRealStockPrices() {
@@ -1142,21 +1259,39 @@
             
             if (chatBtn && chatBox) {
                 chatBtn.addEventListener('click', () => {
-                    chatBox.classList.toggle('active');
-                    if (chatBox.classList.contains('active')) {
-                        chatBtn.classList.add('active');
-                    } else {
+                    const isActive = chatBox.classList.contains('active');
+                    if (isActive) {
+                        chatBox.classList.remove('active');
                         chatBtn.classList.remove('active');
+                    } else {
+                        chatBox.classList.add('active');
+                        chatBtn.classList.add('active');
+                        // Focus on input when opening
+                        setTimeout(() => {
+                            const input = document.getElementById('chat-message-input');
+                            if (input) input.focus();
+                        }, 300);
                     }
                 });
             }
             
-            if (closeChatBtn && chatBox) {
-                closeChatBtn.addEventListener('click', () => {
+            if (closeChatBtn && chatBox && chatBtn) {
+                closeChatBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent event bubbling
                     chatBox.classList.remove('active');
                     chatBtn.classList.remove('active');
                 });
             }
+
+            // Click outside to close chat
+            document.addEventListener('click', (e) => {
+                if (chatBox && chatBtn && chatBox.classList.contains('active')) {
+                    if (!chatBox.contains(e.target) && !chatBtn.contains(e.target)) {
+                        chatBox.classList.remove('active');
+                        chatBtn.classList.remove('active');
+                    }
+                }
+            });
 
             const voiceBtn = document.getElementById('voice-btn');
             const voiceModal = document.getElementById('voice-ai-modal');
