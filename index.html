@@ -20,7 +20,7 @@
         // State Management
         let state = {
             currentPage: 'home',
-            currentSubPage: { personal: 'personal-auto', business: 'business-dashboard' },
+            currentSubPage: { personal: 'personal-auto', business: 'business-fleet' },
             chatOpen: false,
             voiceOpen: false,
             chatMessages: [{ isUser: false, message: "Hi! I'm your AI assistant. Ask about portfolio, insurance, refinancing, or net worth." }],
@@ -28,11 +28,18 @@
             stockData: {},
             vinInput: '',
             vinResults: null,
+            businessVinInput: '',
+            businessVinResults: null,
             homeSearch: '',
             homePriceFilter: '',
             vehicleSearch: '',
             vehiclePriceFilter: '',
-            vehicleTypeFilter: ''
+            vehicleTypeFilter: '',
+            commercialPropertySearch: '',
+            commercialPropertyPriceFilter: '',
+            commercialVehicleSearch: '',
+            commercialVehiclePriceFilter: '',
+            commercialVehicleTypeFilter: ''
         };
 
         // Configuration
@@ -60,6 +67,38 @@
         const mockVehicles = [
             { id: 1, year: 2022, make: "Honda", model: "CR-V", trim: "EX-L", price: 32500, mileage: 15420, type: "suv", description: "Excellent condition", source: "AutoTrader", mpg: "28/34", carfaxScore: 4.8 },
             { id: 2, year: 2023, make: "Toyota", model: "Camry", trim: "XLE", price: 28900, mileage: 8950, type: "sedan", description: "Like new", source: "KBB", mpg: "32/41", carfaxScore: 4.9 }
+        ];
+
+        const mockCommercialProperties = [
+            { id: 1, address: "1500 Commerce Dr, Atlanta 30318", price: 1850000, sqft: 8500, yearBuilt: 2015, description: "Warehouse with office space", source: "LoopNet", daysOnMarket: 18, type: "Warehouse" },
+            { id: 2, address: "2200 Industrial Blvd, Atlanta 30344", price: 2450000, sqft: 12000, yearBuilt: 2019, description: "Modern industrial facility", source: "Commercial MLS", daysOnMarket: 25, type: "Industrial" }
+        ];
+
+        const mockCommercialVehicles = [
+            { id: 1, year: 2023, make: "Ford", model: "F-450", trim: "XLT", price: 58500, mileage: 12500, type: "truck", description: "Heavy-duty work truck", source: "Commercial Truck Trader", mpg: "14/18", condition: "Excellent" },
+            { id: 2, year: 2022, make: "Mercedes", model: "Sprinter", trim: "2500", price: 48900, mileage: 22000, type: "van", description: "Cargo van with shelving", source: "Commercial Auto", mpg: "18/24", condition: "Very Good" }
+        ];
+
+        const personalInsuranceQuotes = [
+            { carrier: "Current (Allstate)", type: "Auto", premium: 1680, coverage: "Full Coverage", deductible: 500, status: "current" },
+            { carrier: "Geico", type: "Auto", premium: 1260, coverage: "Full Coverage", deductible: 500, status: "quote", savings: 420 },
+            { carrier: "Progressive", type: "Auto", premium: 1340, coverage: "Full Coverage", deductible: 500, status: "quote", savings: 340 },
+            { carrier: "Current (State Farm)", type: "Home", premium: 1840, coverage: "$535K Dwelling", deductible: 2500, status: "current" },
+            { carrier: "Liberty Mutual", type: "Home", premium: 1460, coverage: "$535K Dwelling", deductible: 2500, status: "quote", savings: 380 },
+            { carrier: "Travelers", type: "Home", premium: 1520, coverage: "$535K Dwelling", deductible: 2500, status: "quote", savings: 320 },
+            { carrier: "USAA", type: "Umbrella", premium: 240, coverage: "$1M Liability", deductible: 0, status: "quote", savings: 0 }
+        ];
+
+        const businessInsuranceQuotes = [
+            { carrier: "Current (Hartford)", type: "General Liability", premium: 5200, coverage: "$2M Aggregate", deductible: 1000, status: "current" },
+            { carrier: "Chubb", type: "General Liability", premium: 4680, coverage: "$2M Aggregate", deductible: 1000, status: "quote", savings: 520 },
+            { carrier: "Liberty Mutual", type: "General Liability", premium: 4850, coverage: "$2M Aggregate", deductible: 1000, status: "quote", savings: 350 },
+            { carrier: "Current (Travelers)", type: "Workers' Comp", premium: 12500, coverage: "24 Employees", deductible: 0, status: "current" },
+            { carrier: "The Hartford", type: "Workers' Comp", premium: 11800, coverage: "24 Employees", deductible: 0, status: "quote", savings: 700 },
+            { carrier: "AmTrust", type: "Workers' Comp", premium: 12100, coverage: "24 Employees", deductible: 0, status: "quote", savings: 400 },
+            { carrier: "Current (Progressive)", type: "Commercial Auto", premium: 8800, coverage: "3 Vehicles", deductible: 1000, status: "current" },
+            { carrier: "Nationwide", type: "Commercial Auto", premium: 7950, coverage: "3 Vehicles", deductible: 1000, status: "quote", savings: 850 },
+            { carrier: "Geico Commercial", type: "Commercial Auto", premium: 8200, coverage: "3 Vehicles", deductible: 1000, status: "quote", savings: 600 }
         ];
 
         // API Functions
@@ -90,21 +129,24 @@
             state.marketStatus = isOpen ? '● Open' : '● Closed';
         }
 
-        async function scanVIN() {
-            const vin = state.vinInput.toUpperCase().trim();
+        async function scanVIN(isPersonal = true) {
+            const vinField = isPersonal ? 'vinInput' : 'businessVinInput';
+            const resultsField = isPersonal ? 'vinResults' : 'businessVinResults';
+            
+            const vin = state[vinField].toUpperCase().trim();
             if (vin.length !== 17 || !/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) {
-                state.vinResults = { error: 'Invalid VIN (17 chars, no I/O/Q)' };
+                state[resultsField] = { error: 'Invalid VIN (17 chars, no I/O/Q)' };
                 render();
                 return;
             }
-            state.vinResults = { loading: true };
+            state[resultsField] = { loading: true };
             render();
             try {
                 const res = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/${vin}?format=json`);
                 const data = await res.json();
                 if (data.Results?.length) {
                     const get = (v) => data.Results.find(r => r.Variable === v)?.Value || 'N/A';
-                    state.vinResults = {
+                    state[resultsField] = {
                         success: true,
                         make: get('Make'),
                         model: get('Model'),
@@ -116,10 +158,10 @@
                         plantCountry: get('Plant Country')
                     };
                 } else {
-                    state.vinResults = { error: 'VIN not found' };
+                    state[resultsField] = { error: 'VIN not found' };
                 }
             } catch {
-                state.vinResults = { error: 'NHTSA API failed' };
+                state[resultsField] = { error: 'NHTSA API failed' };
             }
             render();
         }
@@ -171,6 +213,33 @@
             }
             if (state.vehicleTypeFilter) {
                 filtered = filtered.filter(v => v.type === state.vehicleTypeFilter);
+            }
+            return filtered;
+        }
+
+        function getFilteredCommercialProperties() {
+            let filtered = mockCommercialProperties;
+            if (state.commercialPropertySearch) {
+                filtered = filtered.filter(p => p.address.toLowerCase().includes(state.commercialPropertySearch.toLowerCase()) || p.description.toLowerCase().includes(state.commercialPropertySearch.toLowerCase()));
+            }
+            if (state.commercialPropertyPriceFilter) {
+                const [min, max] = state.commercialPropertyPriceFilter.split('-').map(Number);
+                filtered = filtered.filter(p => p.price >= min && p.price <= max);
+            }
+            return filtered;
+        }
+
+        function getFilteredCommercialVehicles() {
+            let filtered = mockCommercialVehicles;
+            if (state.commercialVehicleSearch) {
+                filtered = filtered.filter(v => `${v.year} ${v.make} ${v.model}`.toLowerCase().includes(state.commercialVehicleSearch.toLowerCase()));
+            }
+            if (state.commercialVehiclePriceFilter) {
+                const [min, max] = state.commercialVehiclePriceFilter.split('-').map(Number);
+                filtered = filtered.filter(v => v.price >= min && v.price <= max);
+            }
+            if (state.commercialVehicleTypeFilter) {
+                filtered = filtered.filter(v => v.type === state.commercialVehicleTypeFilter);
             }
             return filtered;
         }
@@ -374,13 +443,38 @@
                             </div>
                         </div>
                         
+                        <!-- AI Trade-in Scenarios -->
+                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6 mb-6">
+                            <h3 class="text-xl font-bold text-white mb-3">🤖 AI Trade-In Scenarios</h3>
+                            <div class="space-y-3">
+                                <div class="bg-gray-900 border border-yellow-600/10 rounded-lg p-4">
+                                    <h4 class="text-yellow-600 font-bold mb-2">Recommended: 2025 Honda Accord Hybrid</h4>
+                                    <div class="grid grid-cols-2 gap-3 text-sm">
+                                        <div><span class="text-gray-400">New Loan:</span> <span class="text-white">$24,700</span></div>
+                                        <div><span class="text-gray-400">Payment:</span> <span class="text-white">$410/mo</span></div>
+                                        <div><span class="text-gray-400">Fuel Savings:</span> <span class="text-green-400">+$85/mo</span></div>
+                                        <div><span class="text-gray-400">Net Impact:</span> <span class="text-green-400">-$325/mo</span></div>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-900 border border-yellow-600/10 rounded-lg p-4">
+                                    <h4 class="text-yellow-600 font-bold mb-2">Alternative: 2025 Toyota RAV4</h4>
+                                    <div class="grid grid-cols-2 gap-3 text-sm">
+                                        <div><span class="text-gray-400">New Loan:</span> <span class="text-white">$26,200</span></div>
+                                        <div><span class="text-gray-400">Payment:</span> <span class="text-white">$435/mo</span></div>
+                                        <div><span class="text-gray-400">Insurance:</span> <span class="text-green-400">+$15/mo savings</span></div>
+                                        <div><span class="text-gray-400">Net Impact:</span> <span class="text-yellow-400">-$420/mo</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <!-- VIN Decoder -->
                         <div class="bg-black rounded-xl border border-yellow-600/20 p-6 mb-6">
                             <h3 class="text-xl font-bold text-white mb-3">VIN Decoder</h3>
                             <p class="text-gray-400 mb-4">Enter any VIN to analyze vehicle specifications from NHTSA database.</p>
                             <div class="flex gap-3 mb-4">
                                 <input type="text" id="vinInput" value="${state.vinInput}" oninput="state.vinInput=this.value" placeholder="Enter VIN (17 characters)..." maxlength="17" class="flex-1 px-4 py-2 bg-gray-900 border border-yellow-600/20 rounded-lg text-white placeholder-gray-500">
-                                <button onclick="scanVIN()" class="px-6 py-2 bg-yellow-600 text-black rounded-lg font-semibold hover:bg-yellow-700">Analyze</button>
+                                <button onclick="scanVIN(true)" class="px-6 py-2 bg-yellow-600 text-black rounded-lg font-semibold hover:bg-yellow-700">Analyze</button>
                             </div>
                             ${state.vinResults ? `
                                 <div class="bg-gray-900 border border-yellow-600/20 rounded-lg p-4">
@@ -470,6 +564,26 @@
                             </div>
                         </div>
                         
+                        <!-- AI Refinance Scenario -->
+                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6 mb-6">
+                            <h3 class="text-xl font-bold text-white mb-3">🤖 AI Refinance Recommendation</h3>
+                            <div class="bg-gradient-to-r from-green-600/10 border border-green-600/20 rounded-lg p-4">
+                                <h4 class="text-green-400 font-bold mb-3">Excellent Opportunity Detected!</h4>
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div><span class="text-gray-400">New Rate:</span> <span class="text-green-400 font-semibold">3.75%</span></div>
+                                    <div><span class="text-gray-400">Current Rate:</span> <span class="text-white">4.15%</span></div>
+                                    <div><span class="text-gray-400">New Payment:</span> <span class="text-white">$1,455/mo</span></div>
+                                    <div><span class="text-gray-400">Current Payment:</span> <span class="text-white">$1,743/mo</span></div>
+                                    <div><span class="text-gray-400">Monthly Savings:</span> <span class="text-green-400 font-semibold">$288</span></div>
+                                    <div><span class="text-gray-400">Lifetime Savings:</span> <span class="text-green-400 font-semibold">$82,900</span></div>
+                                </div>
+                                <div class="mt-4 pt-4 border-t border-green-600/20">
+                                    <p class="text-sm text-gray-400">✓ 3 lenders pre-approved</p>
+                                    <p class="text-sm text-gray-400">✓ No closing cost options available</p>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <!-- Homes for Sale -->
                         <div class="bg-black rounded-xl border border-yellow-600/20 p-6">
                             <h3 class="text-xl font-bold text-white mb-3">Homes for Sale</h3>
@@ -506,9 +620,13 @@
                         </div>
                     `;
                 } else if (state.currentSubPage.personal === 'personal-insurance') {
+                    const totalCurrent = personalInsuranceQuotes.filter(q => q.status === 'current').reduce((sum, q) => sum + q.premium, 0);
+                    const totalSavings = personalInsuranceQuotes.filter(q => q.status === 'quote' && q.savings).reduce((sum, q) => sum + q.savings, 0);
+                    
                     mainContent = subNav + `
                         <h2 class="text-3xl font-bold text-yellow-600 mb-6">Personal Insurance</h2>
-                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6">
+                        
+                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6 mb-6">
                             <h3 class="text-xl font-bold text-white mb-4">Coverage Summary</h3>
                             <div class="space-y-3">
                                 <div class="flex justify-between py-3 border-b border-yellow-600/10">
@@ -516,12 +634,90 @@
                                     <span class="text-white font-semibold">6</span>
                                 </div>
                                 <div class="flex justify-between py-3 border-b border-yellow-600/10">
-                                    <span class="text-gray-400">Annual Premium</span>
-                                    <span class="text-white font-semibold">$8,940</span>
+                                    <span class="text-gray-400">Current Annual Premium</span>
+                                    <span class="text-white font-semibold">$${totalCurrent.toLocaleString()}</span>
+                                </div>
+                                <div class="flex justify-between py-3 border-b border-yellow-600/10">
+                                    <span class="text-gray-400">Coverage Score</span>
+                                    <span class="text-green-400 font-semibold">9.1/10</span>
                                 </div>
                                 <div class="flex justify-between py-3">
-                                    <span class="text-gray-400">Potential Savings</span>
-                                    <span class="text-green-400 font-semibold">$1,280/year</span>
+                                    <span class="text-gray-400">Total Potential Savings</span>
+                                    <span class="text-green-400 font-semibold text-xl">$${totalSavings}/year</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Renewal Quotes -->
+                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6 mb-6">
+                            <h3 class="text-xl font-bold text-white mb-4">🔄 Renewal Quote Comparisons</h3>
+                            <p class="text-gray-400 mb-4">Compare your current policies with renewal options from top carriers</p>
+                            
+                            <div class="space-y-6">
+                                ${['Auto', 'Home', 'Umbrella'].map(type => {
+                                    const quotes = personalInsuranceQuotes.filter(q => q.type === type);
+                                    const current = quotes.find(q => q.status === 'current');
+                                    const alternatives = quotes.filter(q => q.status === 'quote');
+                                    
+                                    return `
+                                        <div class="border border-yellow-600/20 rounded-lg p-4">
+                                            <h4 class="text-lg font-bold text-yellow-600 mb-3">${type} Insurance</h4>
+                                            
+                                            <!-- Current Policy -->
+                                            ${current ? `
+                                                <div class="bg-gray-900 border-l-4 border-blue-500 rounded-lg p-4 mb-3">
+                                                    <div class="flex justify-between items-start mb-2">
+                                                        <div>
+                                                            <span class="text-blue-400 font-semibold">${current.carrier}</span>
+                                                            <span class="ml-2 text-xs bg-blue-500 text-white px-2 py-1 rounded">CURRENT</span>
+                                                        </div>
+                                                        <div class="text-right">
+                                                            <div class="text-xl font-bold text-white">$${current.premium.toLocaleString()}/yr</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-sm text-gray-400">
+                                                        <div>${current.coverage}</div>
+                                                        ${current.deductible > 0 ? `<div>Deductible: $${current.deductible.toLocaleString()}</div>` : ''}
+                                                    </div>
+                                                </div>
+                                            ` : ''}
+                                            
+                                            <!-- Alternative Quotes -->
+                                            ${alternatives.map(quote => `
+                                                <div class="bg-gray-900/50 border-l-4 border-green-500 rounded-lg p-4 mb-2">
+                                                    <div class="flex justify-between items-start mb-2">
+                                                        <div>
+                                                            <span class="text-green-400 font-semibold">${quote.carrier}</span>
+                                                            ${quote.savings ? `<span class="ml-2 text-xs bg-green-600 text-white px-2 py-1 rounded">SAVE $${quote.savings}/yr</span>` : ''}
+                                                        </div>
+                                                        <div class="text-right">
+                                                            <div class="text-xl font-bold text-green-400">$${quote.premium.toLocaleString()}/yr</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-sm text-gray-400">
+                                                        <div>${quote.coverage}</div>
+                                                        ${quote.deductible > 0 ? `<div>Deductible: $${quote.deductible.toLocaleString()}</div>` : ''}
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                        
+                        <!-- Policy Alerts -->
+                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6">
+                            <h3 class="text-xl font-bold text-white mb-4">⚠️ Policy Alerts</h3>
+                            <div class="space-y-3">
+                                <div class="bg-yellow-600/10 border-l-4 border-yellow-600 rounded-lg p-4">
+                                    <strong class="text-yellow-600">Auto Insurance:</strong> Policy renews in 30 days
+                                </div>
+                                <div class="bg-yellow-600/10 border-l-4 border-yellow-600 rounded-lg p-4">
+                                    <strong class="text-yellow-600">Home Insurance:</strong> Premium increased 8% this year
+                                </div>
+                                <div class="bg-green-600/10 border-l-4 border-green-600 rounded-lg p-4">
+                                    <strong class="text-green-600">Recommendation:</strong> Add umbrella policy for $240/yr
                                 </div>
                             </div>
                         </div>
@@ -575,8 +771,11 @@
                     `;
                 } else if (state.currentSubPage.business === 'business-fleet') {
                     mainContent = subNav + `
-                        <h2 class="text-3xl font-bold text-yellow-600 mb-6">Commercial Fleet</h2>
-                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6">
+                        <h2 class="text-3xl font-bold text-yellow-600 mb-6">Commercial Fleet Management</h2>
+                        
+                        <!-- Current Fleet -->
+                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6 mb-6">
+                            <h3 class="text-xl font-bold text-white mb-4">Current Fleet Assets</h3>
                             <table class="w-full">
                                 <thead class="bg-yellow-600/10">
                                     <tr>
@@ -592,12 +791,90 @@
                                     <tr><td class="px-4 py-4 text-white">2023 Chevrolet Silverado</td><td class="px-4 py-4 text-gray-400">Heavy-Duty Truck</td><td class="px-4 py-4 text-white">$52,000</td><td class="px-4 py-4 text-green-400">Active</td></tr>
                                 </tbody>
                             </table>
+                            <div class="mt-4 pt-4 border-t border-yellow-600/20">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">Total Fleet Value:</span>
+                                    <span class="text-green-400 font-bold text-xl">$135,000</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- VIN Decoder for Business -->
+                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6 mb-6">
+                            <h3 class="text-xl font-bold text-white mb-3">Commercial VIN Decoder</h3>
+                            <p class="text-gray-400 mb-4">Verify fleet vehicle specifications from NHTSA database.</p>
+                            <div class="flex gap-3 mb-4">
+                                <input type="text" id="businessVinInput" value="${state.businessVinInput}" oninput="state.businessVinInput=this.value" placeholder="Enter Commercial VIN..." maxlength="17" class="flex-1 px-4 py-2 bg-gray-900 border border-yellow-600/20 rounded-lg text-white placeholder-gray-500">
+                                <button onclick="scanVIN(false)" class="px-6 py-2 bg-yellow-600 text-black rounded-lg font-semibold hover:bg-yellow-700">Analyze</button>
+                            </div>
+                            ${state.businessVinResults ? `
+                                <div class="bg-gray-900 border border-yellow-600/20 rounded-lg p-4">
+                                    ${state.businessVinResults.error ? `<div class="text-red-400">${state.businessVinResults.error}</div>` : ''}
+                                    ${state.businessVinResults.loading ? `<div class="text-yellow-600">Querying NHTSA...</div>` : ''}
+                                    ${state.businessVinResults.success ? `
+                                        <h4 class="text-yellow-600 font-bold mb-3">✓ Commercial Vehicle Decoded</h4>
+                                        <div class="grid grid-cols-2 gap-3 text-sm">
+                                            <div class="flex justify-between py-2 border-b border-yellow-600/10">
+                                                <span class="text-gray-400">Make:</span>
+                                                <span class="text-white font-semibold">${state.businessVinResults.make}</span>
+                                            </div>
+                                            <div class="flex justify-between py-2 border-b border-yellow-600/10">
+                                                <span class="text-gray-400">Model:</span>
+                                                <span class="text-white font-semibold">${state.businessVinResults.model}</span>
+                                            </div>
+                                            <div class="flex justify-between py-2 border-b border-yellow-600/10">
+                                                <span class="text-gray-400">Year:</span>
+                                                <span class="text-white font-semibold">${state.businessVinResults.year}</span>
+                                            </div>
+                                            <div class="flex justify-between py-2 border-b border-yellow-600/10">
+                                                <span class="text-gray-400">Type:</span>
+                                                <span class="text-white font-semibold">${state.businessVinResults.bodyType}</span>
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <!-- Commercial Vehicles for Sale -->
+                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6">
+                            <h3 class="text-xl font-bold text-white mb-3">Commercial Vehicles for Sale</h3>
+                            <div class="flex gap-3 mb-4">
+                                <input type="text" value="${state.commercialVehicleSearch}" oninput="state.commercialVehicleSearch=this.value; render()" placeholder="Search..." class="flex-1 px-4 py-2 bg-gray-900 border border-yellow-600/20 rounded-lg text-white placeholder-gray-500 text-sm">
+                                <select onchange="state.commercialVehiclePriceFilter=this.value; render()" class="px-4 py-2 bg-gray-900 border border-yellow-600/20 rounded-lg text-white text-sm">
+                                    <option value="">All Prices</option>
+                                    <option value="0-50000">Under $50K</option>
+                                    <option value="50000-70000">$50K - $70K</option>
+                                    <option value="70000-99999999">Over $70K</option>
+                                </select>
+                            </div>
+                            <div class="space-y-4">
+                                ${getFilteredCommercialVehicles().map(v => `
+                                    <div class="bg-gray-900 border border-yellow-600/10 rounded-lg p-4 flex gap-4">
+                                        <div class="flex-1">
+                                            <h4 class="text-yellow-600 font-bold mb-2">${v.year} ${v.make} ${v.model} ${v.trim}</h4>
+                                            <p class="text-gray-400 text-sm mb-2">${v.description}</p>
+                                            <div class="flex gap-4 text-xs text-gray-500">
+                                                <span>${v.mileage.toLocaleString()} miles</span>
+                                                <span>${v.mpg} MPG</span>
+                                                <span>Condition: ${v.condition}</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-2xl font-bold text-green-400 mb-1">$${v.price.toLocaleString()}</div>
+                                            <div class="text-xs text-gray-500">via ${v.source}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
                         </div>
                     `;
                 } else if (state.currentSubPage.business === 'business-property') {
                     mainContent = subNav + `
-                        <h2 class="text-3xl font-bold text-yellow-600 mb-6">Commercial Property</h2>
-                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6">
+                        <h2 class="text-3xl font-bold text-yellow-600 mb-6">Commercial Property Management</h2>
+                        
+                        <!-- Current Property -->
+                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6 mb-6">
                             <h3 class="text-xl font-bold text-white mb-4">123 Industrial Way, Atlanta, GA</h3>
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="flex justify-between py-3 border-b border-yellow-600/10">
@@ -608,7 +885,7 @@
                                     <span class="text-gray-400">Mortgage Balance</span>
                                     <span class="text-white font-semibold">$1,680,000</span>
                                 </div>
-                                <div class="flex justify-between py-3">
+                                <div class="flex justify-between py-3 border-b border-yellow-600/10">
                                     <span class="text-gray-400">Property Equity</span>
                                     <span class="text-green-400 font-semibold">$670,000</span>
                                 </div>
@@ -618,26 +895,171 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- AI Refinance Scenario for Business -->
+                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6 mb-6">
+                            <h3 class="text-xl font-bold text-white mb-3">🤖 AI Commercial Refinance Analysis</h3>
+                            <div class="bg-gradient-to-r from-green-600/10 border border-green-600/20 rounded-lg p-4">
+                                <h4 class="text-green-400 font-bold mb-3">Strong Refinance Opportunity!</h4>
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div><span class="text-gray-400">Current Rate:</span> <span class="text-white">5.25%</span></div>
+                                    <div><span class="text-gray-400">New Rate:</span> <span class="text-green-400 font-semibold">4.75%</span></div>
+                                    <div><span class="text-gray-400">Current Payment:</span> <span class="text-white">$10,850/mo</span></div>
+                                    <div><span class="text-gray-400">New Payment:</span> <span class="text-green-400 font-semibold">$10,180/mo</span></div>
+                                    <div><span class="text-gray-400">Monthly Savings:</span> <span class="text-green-400 font-semibold">$670</span></div>
+                                    <div><span class="text-gray-400">Annual Savings:</span> <span class="text-green-400 font-semibold">$8,040</span></div>
+                                </div>
+                                <div class="mt-4 pt-4 border-t border-green-600/20">
+                                    <p class="text-sm text-gray-400">✓ Commercial lenders pre-qualified</p>
+                                    <p class="text-sm text-gray-400">✓ Equity position supports refinance</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Commercial Properties for Sale -->
+                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6">
+                            <h3 class="text-xl font-bold text-white mb-3">Commercial Properties for Sale</h3>
+                            <div class="flex gap-3 mb-4">
+                                <input type="text" value="${state.commercialPropertySearch}" oninput="state.commercialPropertySearch=this.value; render()" placeholder="Search properties..." class="flex-1 px-4 py-2 bg-gray-900 border border-yellow-600/20 rounded-lg text-white placeholder-gray-500 text-sm">
+                                <select onchange="state.commercialPropertyPriceFilter=this.value; render()" class="px-4 py-2 bg-gray-900 border border-yellow-600/20 rounded-lg text-white text-sm">
+                                    <option value="">All Prices</option>
+                                    <option value="0-2000000">Under $2M</option>
+                                    <option value="2000000-3000000">$2M - $3M</option>
+                                    <option value="3000000-99999999">Over $3M</option>
+                                </select>
+                            </div>
+                            <div class="space-y-4">
+                                ${getFilteredCommercialProperties().map(p => `
+                                    <div class="bg-gray-900 border border-yellow-600/10 rounded-lg p-4 flex gap-4">
+                                        <div class="flex-1">
+                                            <h4 class="text-yellow-600 font-bold mb-2">${p.address}</h4>
+                                            <p class="text-gray-400 text-sm mb-2">${p.description}</p>
+                                            <div class="flex gap-4 text-xs text-gray-500">
+                                                <span>${p.sqft.toLocaleString()} sqft</span>
+                                                <span>Built ${p.yearBuilt}</span>
+                                                <span>${p.type}</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-2xl font-bold text-green-400 mb-1">$${p.price.toLocaleString()}</div>
+                                            <div class="text-xs text-gray-500">${p.daysOnMarket} days</div>
+                                            <div class="text-xs text-yellow-600">via ${p.source}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
                     `;
                 } else if (state.currentSubPage.business === 'business-insurance') {
+                    const totalCurrent = businessInsuranceQuotes.filter(q => q.status === 'current').reduce((sum, q) => sum + q.premium, 0);
+                    const totalSavings = businessInsuranceQuotes.filter(q => q.status === 'quote' && q.savings).reduce((sum, q) => sum + q.savings, 0);
+                    
                     mainContent = subNav + `
                         <h2 class="text-3xl font-bold text-yellow-600 mb-6">Business Insurance</h2>
+                        
+                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6 mb-6">
+                            <h3 class="text-xl font-bold text-white mb-4">Commercial Coverage Summary</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between py-3 border-b border-yellow-600/10">
+                                    <span class="text-gray-400">Active Policies</span>
+                                    <span class="text-white font-semibold">5</span>
+                                </div>
+                                <div class="flex justify-between py-3 border-b border-yellow-600/10">
+                                    <span class="text-gray-400">Current Annual Premium</span>
+                                    <span class="text-white font-semibold">$${totalCurrent.toLocaleString()}</span>
+                                </div>
+                                <div class="flex justify-between py-3 border-b border-yellow-600/10">
+                                    <span class="text-gray-400">Coverage Status</span>
+                                    <span class="text-green-400 font-semibold">Excellent</span>
+                                </div>
+                                <div class="flex justify-between py-3">
+                                    <span class="text-gray-400">Total Potential Savings</span>
+                                    <span class="text-green-400 font-semibold text-xl">$${totalSavings.toLocaleString()}/year</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Renewal Quotes -->
+                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6 mb-6">
+                            <h3 class="text-xl font-bold text-white mb-4">🔄 Commercial Renewal Quote Comparisons</h3>
+                            <p class="text-gray-400 mb-4">Compare current business policies with renewal options from top commercial carriers</p>
+                            
+                            <div class="space-y-6">
+                                ${['General Liability', 'Workers\' Comp', 'Commercial Auto'].map(type => {
+                                    const quotes = businessInsuranceQuotes.filter(q => q.type === type);
+                                    const current = quotes.find(q => q.status === 'current');
+                                    const alternatives = quotes.filter(q => q.status === 'quote');
+                                    
+                                    return `
+                                        <div class="border border-yellow-600/20 rounded-lg p-4">
+                                            <h4 class="text-lg font-bold text-yellow-600 mb-3">${type}</h4>
+                                            
+                                            <!-- Current Policy -->
+                                            ${current ? `
+                                                <div class="bg-gray-900 border-l-4 border-blue-500 rounded-lg p-4 mb-3">
+                                                    <div class="flex justify-between items-start mb-2">
+                                                        <div>
+                                                            <span class="text-blue-400 font-semibold">${current.carrier}</span>
+                                                            <span class="ml-2 text-xs bg-blue-500 text-white px-2 py-1 rounded">CURRENT</span>
+                                                        </div>
+                                                        <div class="text-right">
+                                                            <div class="text-xl font-bold text-white">$${current.premium.toLocaleString()}/yr</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-sm text-gray-400">
+                                                        <div>${current.coverage}</div>
+                                                        ${current.deductible > 0 ? `<div>Deductible: $${current.deductible.toLocaleString()}</div>` : ''}
+                                                    </div>
+                                                </div>
+                                            ` : ''}
+                                            
+                                            <!-- Alternative Quotes -->
+                                            ${alternatives.map(quote => `
+                                                <div class="bg-gray-900/50 border-l-4 border-green-500 rounded-lg p-4 mb-2">
+                                                    <div class="flex justify-between items-start mb-2">
+                                                        <div>
+                                                            <span class="text-green-400 font-semibold">${quote.carrier}</span>
+                                                            ${quote.savings ? `<span class="ml-2 text-xs bg-green-600 text-white px-2 py-1 rounded">SAVE $${quote.savings.toLocaleString()}/yr</span>` : ''}
+                                                        </div>
+                                                        <div class="text-right">
+                                                            <div class="text-xl font-bold text-green-400">$${quote.premium.toLocaleString()}/yr</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-sm text-gray-400">
+                                                        <div>${quote.coverage}</div>
+                                                        ${quote.deductible > 0 ? `<div>Deductible: $${quote.deductible.toLocaleString()}</div>` : ''}
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                        
+                        <!-- Policy Renewal Schedule -->
                         <div class="bg-black rounded-xl border border-yellow-600/20 p-6">
-                            <table class="w-full">
-                                <thead class="bg-yellow-600/10">
-                                    <tr>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-yellow-600 uppercase">Policy Type</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-yellow-600 uppercase">Carrier</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-yellow-600 uppercase">Premium</th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-yellow-600 uppercase">Expires</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr><td class="px-4 py-4 text-white">General Liability</td><td class="px-4 py-4 text-gray-400">Hartford</td><td class="px-4 py-4 text-white">$5,200/yr</td><td class="px-4 py-4 text-gray-400">06/01/2026</td></tr>
-                                    <tr><td class="px-4 py-4 text-white">Workers' Comp</td><td class="px-4 py-4 text-gray-400">Travelers</td><td class="px-4 py-4 text-white">$12,500/yr</td><td class="px-4 py-4 text-gray-400">03/15/2026</td></tr>
-                                    <tr><td class="px-4 py-4 text-white">Commercial Auto</td><td class="px-4 py-4 text-gray-400">Progressive</td><td class="px-4 py-4 text-white">$8,800/yr</td><td class="px-4 py-4 text-gray-400">07/01/2026</td></tr>
-                                </tbody>
-                            </table>
+                            <h3 class="text-xl font-bold text-white mb-4">📅 Policy Renewal Schedule</h3>
+                            <div class="space-y-3">
+                                <div class="bg-yellow-600/10 border-l-4 border-yellow-600 rounded-lg p-4">
+                                    <div class="flex justify-between">
+                                        <span><strong class="text-yellow-600">General Liability:</strong> Hartford</span>
+                                        <span class="text-gray-400">Expires 06/01/2026</span>
+                                    </div>
+                                </div>
+                                <div class="bg-red-600/10 border-l-4 border-red-600 rounded-lg p-4">
+                                    <div class="flex justify-between">
+                                        <span><strong class="text-red-400">Workers' Comp:</strong> Travelers</span>
+                                        <span class="text-gray-400">Expires 03/15/2026 (90 days)</span>
+                                    </div>
+                                </div>
+                                <div class="bg-yellow-600/10 border-l-4 border-yellow-600 rounded-lg p-4">
+                                    <div class="flex justify-between">
+                                        <span><strong class="text-yellow-600">Commercial Auto:</strong> Progressive</span>
+                                        <span class="text-gray-400">Expires 07/01/2026</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     `;
                 }
