@@ -427,77 +427,74 @@
                                 <div class="flex justify-between py-2 border-b border-yellow-600/10">
                                     <span class="text-gray-400">Mileage</span>
                                     <span class="text-white font-semibold">28,500 miles</span>
-                                </div>
-                                <div class="flex justify-between py-2 border-b border-yellow-600/10">
-                                    <span class="text-gray-400">Est. Market Value</span>
-                                    <span class="text-green-400 font-semibold">$29,500</span>
-                                </div>
-                                <div class="flex justify-between py-2 border-b border-yellow-600/10">
-                                    <span class="text-gray-400">Loan Balance</span>
-                                    <span class="text-yellow-400 font-semibold">$18,200</span>
-                                </div>
-                                <div class="flex justify-between py-2">
-                                    <span class="text-gray-400">Estimated Equity</span>
-                                    <span class="text-green-400 font-semibold">$11,300</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- AI Trade-in Scenarios -->
-                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6 mb-6">
-                            <h3 class="text-xl font-bold text-white mb-3">🤖 AI Trade-In Scenarios</h3>
-                            <div class="space-y-3">
-                                <div class="bg-gray-900 border border-yellow-600/10 rounded-lg p-4">
-                                    <h4 class="text-yellow-600 font-bold mb-2">Recommended: 2025 Honda Accord Hybrid</h4>
-                                    <div class="grid grid-cols-2 gap-3 text-sm">
-                                        <div><span class="text-gray-400">New Loan:</span> <span class="text-white">$24,700</span></div>
-                                        <div><span class="text-gray-400">Payment:</span> <span class="text-white">$410/mo</span></div>
-                                        <div><span class="text-gray-400">Fuel Savings:</span> <span class="text-green-400">+$85/mo</span></div>
-                                        <div><span class="text-gray-400">Net Impact:</span> <span class="text-green-400">-$325/mo</span></div>
-                                    </div>
-                                </div>
-                                <div class="bg-gray-900 border border-yellow-600/10 rounded-lg p-4">
-                                    <h4 class="text-yellow-600 font-bold mb-2">Alternative: 2025 Toyota RAV4</h4>
-                                    <div class="grid grid-cols-2 gap-3 text-sm">
-                                        <div><span class="text-gray-400">New Loan:</span> <span class="text-white">$26,200</span></div>
-                                        <div><span class="text-gray-400">Payment:</span> <span class="text-white">$435/mo</span></div>
-                                        <div><span class="text-gray-400">Insurance:</span> <span class="text-green-400">+$15/mo savings</span></div>
-                                        <div><span class="text-gray-400">Net Impact:</span> <span class="text-yellow-400">-$420/mo</span></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- VIN Decoder -->
-                        <div class="bg-black rounded-xl border border-yellow-600/20 p-6 mb-6">
-                            <h3 class="text-xl font-bold text-white mb-3">VIN Decoder</h3>
-                            <p class="text-gray-400 mb-4">Enter any VIN to analyze vehicle specifications from NHTSA database.</p>
-                            <div class="flex gap-3 mb-4">
-                                <input type="text" id="vinInput" value="${state.vinInput}" oninput="state.vinInput=this.value" placeholder="Enter VIN (17 characters)..." maxlength="17" class="flex-1 px-4 py-2 bg-gray-900 border border-yellow-600/20 rounded-lg text-white placeholder-gray-500">
-                                <button onclick="scanVIN(true)" class="px-6 py-2 bg-yellow-600 text-black rounded-lg font-semibold hover:bg-yellow-700">Analyze</button>
-                            </div>
-                            ${state.vinResults ? `
-                                <div class="bg-gray-900 border border-yellow-600/20 rounded-lg p-4">
-                                    ${state.vinResults.error ? `<div class="text-red-400">${state.vinResults.error}</div>` : ''}
-                                    ${state.vinResults.loading ? `<div class="text-yellow-600">Querying NHTSA...</div>` : ''}
-                                    ${state.vinResults.success ? `
-                                        <h4 class="text-yellow-600 font-bold mb-3">✓ Vehicle Decoded</h4>
-                                        <div class="grid grid-cols-2 gap-3 text-sm">
-                                            <div class="flex justify-between py-2 border-b border-yellow-600/10">
-                                                <span class="text-gray-400">Make:</span>
-                                                <span class="text-white font-semibold">${state.vinResults.make}</span>
-                                            </div>
-                                            <div class="flex justify-between py-2 border-b border-yellow-600/10">
-                                                <span class="text-gray-400">Model:</span>
-                                                <span class="text-white font-semibold">${state.vinResults.model}</span>
-                                            </div>
-                                            <div class="flex justify-between py-2 border-b border-yellow-600/10">
-                                                <span class="text-gray-400">Year:</span>
-                                                <span class="text-white font-semibold">${state.vinResults.year}</span>
-                                            </div>
-                                            <div class="flex justify-between py-2 border-b border-yellow-600/10">
-                                                <span class="text-gray-400">Body Type:</span>
-                                                <span class="text-white font-semibold">${state.vinResults.bodyType}</span>
+                               <!-- Header -->
+<header class="bg-white border-b sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <!-- Hamburger Menu -->
+            <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-900">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+            
+            <!-- Logo -->
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-r from-yellow-600 to-yellow-700 rounded-lg flex items-center justify-center text-black">
+                    ${icons.shield}
+                </div>
+                <span class="hidden sm:block font-bold text-2xl text-gray-900">Truevestments</span>
+            </div>
+            
+            <!-- Desktop Navigation -->
+            <nav class="hidden lg:flex space-x-2">
+                ${[
+                    { id: 'home', label: 'Home', icon: 'home' },
+                    { id: 'personal', label: 'Personal', icon: 'user' },
+                    { id: 'business', label: 'Business', icon: 'building' },
+                    { id: 'investments', label: 'Investments', icon: 'trending' }
+                ].map(nav => `
+                    <button onclick="setPage('${nav.id}')" class="px-4 py-2 rounded-lg font-semibold text-sm flex items-center space-x-2 relative ${state.currentPage === nav.id ? 'text-gray-900' : 'text-gray-600 hover:bg-gray-100'}">
+                        ${icons[nav.icon]}
+                        <span>${nav.label}</span>
+                        ${state.currentPage === nav.id ? '<div class="absolute bottom-0 left-4 right-4 h-0.5 bg-yellow-600"></div>' : ''}
+                    </button>
+                `).join('')}
+            </nav>
+            
+            <!-- AI Buttons -->
+            <div class="flex space-x-2">
+                <button onclick="toggleChat()" class="px-3 py-2 ${state.chatOpen ? 'bg-green-600 text-white' : 'bg-yellow-600 text-black hover:bg-yellow-700'} rounded-lg font-semibold text-sm flex items-center space-x-2">
+                    ${icons.chat}
+                    <span class="hidden sm:inline">AI Chat</span>
+                </button>
+                <button onclick="toggleVoice()" class="px-3 py-2 bg-yellow-600 text-black rounded-lg font-semibold text-sm hover:bg-yellow-700 flex items-center space-x-2">
+                    ${icons.mic}
+                    <span class="hidden sm:inline">Voice</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Mobile Navigation Menu -->
+${state.sidebarOpen ? `
+    <div class="lg:hidden bg-white border-b border-gray-200 animate-slideUp sticky top-16 z-30">
+        <nav class="px-4 py-3 space-y-1">
+            ${[
+                { id: 'home', label: 'Home', icon: 'home' },
+                { id: 'personal', label: 'Personal', icon: 'user' },
+                { id: 'business', label: 'Business', icon: 'building' },
+                { id: 'investments', label: 'Investments', icon: 'trending' }
+            ].map(nav => `
+                <button onclick="setPage('${nav.id}')" class="w-full px-4 py-3 rounded-lg font-semibold text-sm flex items-center space-x-3 ${state.currentPage === nav.id ? 'bg-yellow-600 text-black' : 'text-gray-900 hover:bg-gray-100'}">
+                    ${icons[nav.icon]}
+                    <span>${nav.label}</span>
+                </button>
+            `).join('')}
+        </nav>
+    </div>
+` : ''}
                                             </div>
                                         </div>
                                     ` : ''}
